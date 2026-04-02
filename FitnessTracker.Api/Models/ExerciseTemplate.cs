@@ -13,5 +13,10 @@ public class ExerciseTemplate
     [Required]
     public MuscleGroup MuscleGroup { get; set; }
 
+    [Required]
+    public int ExerciseObjectTypeId { get; set; }
+
+    public ExerciseObjectType? ExerciseObjectType { get; set; }
+
     public int DisplayOrder { get; set; }
 }

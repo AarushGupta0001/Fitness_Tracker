@@ -6,6 +6,14 @@ public class ExerciseLog
 {
     public int Id { get; set; }
 
+    public int? WorkoutSessionId { get; set; }
+
+    public WorkoutSession? WorkoutSession { get; set; }
+
+    public int? ExerciseTemplateId { get; set; }
+
+    public ExerciseTemplate? ExerciseTemplate { get; set; }
+
     [Required]
     [MaxLength(50)]
     public string Username { get; set; } = string.Empty;
@@ -20,11 +28,12 @@ public class ExerciseLog
     [MaxLength(120)]
     public string ExerciseName { get; set; } = string.Empty;
 
-    [Range(1, 5)]
+    [Range(0, 5)]
     public int SetNumber { get; set; }
 
-    [Required]
-    public decimal Weight { get; set; }
+    public decimal? Weight { get; set; }
+
+    public bool IsSkipped { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -32,13 +32,15 @@ public class ExerciseTemplatesController(AppDbContext context) : ControllerBase
         }
 
         var templates = await query
+            .Include(e => e.ExerciseObjectType)
             .OrderBy(e => e.MuscleGroup)
             .ThenBy(e => e.DisplayOrder)
             .Select(e => new ExerciseTemplateResponse
             {
                 Id = e.Id,
                 Name = e.Name,
-                MuscleGroup = e.MuscleGroup.ToString()
+                MuscleGroup = e.MuscleGroup.ToString(),
+                Object = e.ExerciseObjectType != null ? e.ExerciseObjectType.Name : string.Empty
             })
             .ToListAsync();
 
@@ -66,4 +68,5 @@ public class ExerciseTemplateResponse
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string MuscleGroup { get; set; } = string.Empty;
+    public string Object { get; set; } = string.Empty;
 }

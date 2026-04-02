@@ -16,5 +16,10 @@ public class WorkoutSession
     [Required]
     public string SelectedMuscleGroups { get; set; } = string.Empty; // Stored as JSON or comma-separated
 
+    [Required]
+    public int WorkoutTypeId { get; set; }
+
+    public WorkoutType? WorkoutType { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

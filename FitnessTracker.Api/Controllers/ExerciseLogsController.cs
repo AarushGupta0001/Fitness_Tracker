@@ -17,9 +17,12 @@ public class ExerciseLogsController(AppDbContext context) : ControllerBase
             return BadRequest("Invalid date format");
         }
 
-        if (!Enum.TryParse<MuscleGroup>(request.MuscleGroup, true, out var parsedMuscleGroup))
+        var session = await context.WorkoutSessions
+            .FirstOrDefaultAsync(s => s.Id == request.WorkoutSessionId);
+
+        if (session == null)
         {
-            return BadRequest("Invalid muscle group");
+            return BadRequest("Workout session not found.");
         }
 
         if (request.Exercises == null || request.Exercises.Count == 0)
@@ -27,35 +30,84 @@ public class ExerciseLogsController(AppDbContext context) : ControllerBase
             return BadRequest("At least one exercise is required");
         }
 
+        var templates = await context.ExerciseTemplates
+            .Include(t => t.ExerciseObjectType)
+            .ToDictionaryAsync(t => t.Id);
+
+        var dumbelWeights = await context.WeightDb.OrderBy(w => w.DisplayOrder).Select(w => w.Value).ToListAsync();
+        var barWeights = await context.WeightBar.OrderBy(w => w.DisplayOrder).Select(w => w.Value).ToListAsync();
+        var machineWeights = await context.WeightMachine.OrderBy(w => w.DisplayOrder).Select(w => w.Value).ToListAsync();
+
         var logs = new List<ExerciseLog>();
 
         foreach (var exercise in request.Exercises)
         {
-            if (string.IsNullOrWhiteSpace(exercise.ExerciseName))
+            if (!templates.TryGetValue(exercise.ExerciseTemplateId, out var template))
             {
-                return BadRequest("Exercise name cannot be empty");
+                return BadRequest($"Exercise template not found for id {exercise.ExerciseTemplateId}");
+            }
+
+            if (exercise.IsSkipped)
+            {
+                logs.Add(new ExerciseLog
+                {
+                    WorkoutSessionId = session.Id,
+                    ExerciseTemplateId = template.Id,
+                    Username = request.Username,
+                    Date = parsedDate.Date,
+                    MuscleGroup = template.MuscleGroup,
+                    ExerciseName = template.Name,
+                    SetNumber = 0,
+                    Weight = null,
+                    IsSkipped = true,
+                    CreatedAt = DateTime.UtcNow
+                });
+
+                continue;
             }
 
             if (exercise.Weights == null || exercise.Weights.Count == 0)
             {
-                return BadRequest($"No weights provided for exercise {exercise.ExerciseName}");
+                return BadRequest($"No weights provided for exercise {template.Name}");
             }
 
-            if (exercise.Weights.Count > 5)
+            if (exercise.Weights.Count > 4)
             {
-                return BadRequest($"Exercise {exercise.ExerciseName} has more than 5 sets");
+                return BadRequest($"Exercise {template.Name} has more than 4 sets");
+            }
+
+            var objectName = template.ExerciseObjectType?.Name?.ToLowerInvariant() ?? string.Empty;
+            var allowedWeights = objectName switch
+            {
+                "dumbel" => dumbelWeights,
+                "bar" => barWeights,
+                "machine" => machineWeights,
+                _ => []
+            };
+
+            if (allowedWeights.Count == 0)
+            {
+                return BadRequest($"No weight table found for exercise object '{objectName}'.");
+            }
+
+            if (exercise.Weights.Any(weight => !allowedWeights.Contains(weight)))
+            {
+                return BadRequest($"Exercise {template.Name} contains invalid weight values for object {objectName}.");
             }
 
             for (var i = 0; i < exercise.Weights.Count; i++)
             {
                 logs.Add(new ExerciseLog
                 {
+                    WorkoutSessionId = session.Id,
+                    ExerciseTemplateId = template.Id,
                     Username = request.Username,
                     Date = parsedDate.Date,
-                    MuscleGroup = parsedMuscleGroup,
-                    ExerciseName = exercise.ExerciseName.Trim(),
+                    MuscleGroup = template.MuscleGroup,
+                    ExerciseName = template.Name,
                     SetNumber = i + 1,
                     Weight = exercise.Weights[i],
+                    IsSkipped = false,
                     CreatedAt = DateTime.UtcNow
                 });
             }
@@ -92,15 +144,16 @@ public class ExerciseLogsController(AppDbContext context) : ControllerBase
 
 public class CreateBulkExerciseLogRequest
 {
+    public int WorkoutSessionId { get; set; }
     public string Username { get; set; } = string.Empty;
     public string Date { get; set; } = string.Empty;
-    public string MuscleGroup { get; set; } = string.Empty;
     public List<CreateExerciseLogItem> Exercises { get; set; } = [];
 }
 
 public class CreateExerciseLogItem
 {
-    public string ExerciseName { get; set; } = string.Empty;
+    public int ExerciseTemplateId { get; set; }
+    public bool IsSkipped { get; set; }
     public List<decimal> Weights { get; set; } = [];
 }
 

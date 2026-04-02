@@ -86,6 +86,11 @@ export const api = {
     return response.json()
   },
 
+  getWeightCatalog: async () => {
+    const response = await requestWithFallback('/Weights/catalog')
+    return response.json()
+  },
+
   deleteExercise: async (id) => {
     await requestWithFallback(`/Exercises/${id}`, { method: 'DELETE' })
   },
@@ -99,6 +104,12 @@ export const api = {
       })
     )
 
+    return response.json()
+  },
+
+  getWorkoutLogs: async (username = '') => {
+    const query = username ? `?username=${encodeURIComponent(username)}` : ''
+    const response = await requestWithFallback(`/WorkoutLogs${query}`)
     return response.json()
   },
 }

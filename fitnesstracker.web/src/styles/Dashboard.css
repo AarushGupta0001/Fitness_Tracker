@@ -71,3 +71,113 @@
   text-align: center;
   font-weight: 500;
 }
+
+.logs-section {
+  margin-top: 2rem;
+  background: #fff;
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.logs-section h3 {
+  margin: 0 0 1rem;
+  color: #253047;
+}
+
+.workout-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.workout-log-header,
+.workout-log-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 1fr;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.workout-log-header {
+  font-weight: 700;
+  color: #475569;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.4rem;
+}
+
+.workout-log-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: #f8fafc;
+}
+
+.workout-link {
+  justify-self: start;
+  border: 1px solid #f59e0b;
+  background: #fffbeb;
+  color: #92400e;
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.exercise-log-list {
+  margin-top: 0.75rem;
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.exercise-log-button {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+}
+
+.set-log-list {
+  margin-top: 0.4rem;
+  padding-left: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.set-log-row {
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 8px;
+  padding: 0.35rem 0.55rem;
+}
+
+.set-log-row.skipped {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.logs-info {
+  color: #64748b;
+}
+
+@media (max-width: 700px) {
+  .workout-log-header,
+  .workout-log-row {
+    grid-template-columns: 50px 1fr;
+  }
+
+  .workout-log-header span:nth-child(3),
+  .workout-log-row span:nth-child(3) {
+    display: none;
+  }
+}

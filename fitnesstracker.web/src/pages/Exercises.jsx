@@ -4,16 +4,16 @@ import Navbar from '../components/Navbar'
 import { api } from '../utils/api'
 import '../styles/Exercises.css'
 
-const WEIGHT_OPTIONS = [2.5, 5, 7.5, 10, 12, 12.5, 14, 15, 16, 17.5, 20, 24]
-
 export default function Exercises() {
   const { selectedDate } = useParams()
   const navigate = useNavigate()
   const [selectedCategories, setSelectedCategories] = useState([])
+  const [workoutSessionId, setWorkoutSessionId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState(null)
   const [exerciseTemplates, setExerciseTemplates] = useState({})
+  const [weightCatalog, setWeightCatalog] = useState({ dumbel: [], bar: [], machine: [] })
   const [exerciseSelections, setExerciseSelections] = useState({})
   const [addingAll, setAddingAll] = useState(false)
   const [showAlert, setShowAlert] = useState(false)
@@ -24,12 +24,17 @@ export default function Exercises() {
       try {
         const sessions = await api.getWorkoutSessionsByDate(selectedDate)
         if (sessions && sessions.length > 0) {
+          const latestSession = sessions[0]
           const categories = sessions[0].selectedMuscleGroups
             .split(',')
             .map((c) => c.trim())
             .filter(Boolean)
 
-          const templates = await api.getExerciseTemplates(categories)
+          const [templates, catalog] = await Promise.all([
+            api.getExerciseTemplates(categories),
+            api.getWeightCatalog(),
+          ])
+
           const groupedTemplates = templates.reduce((acc, template) => {
             if (!acc[template.muscleGroup]) {
               acc[template.muscleGroup] = []
@@ -41,15 +46,22 @@ export default function Exercises() {
 
           const initialSelections = templates.reduce((acc, template) => {
             acc[template.id] = {
-              setsCount: 1,
-              weights: [null],
+              setsCount: 0,
+              isSkipped: false,
+              weights: [],
               activeSetIndex: 0,
             }
             return acc
           }, {})
 
+          setWorkoutSessionId(latestSession.id)
           setSelectedCategories(categories)
           setExerciseTemplates(groupedTemplates)
+          setWeightCatalog({
+            dumbel: catalog.dumbel || [],
+            bar: catalog.bar || [],
+            machine: catalog.machine || [],
+          })
           setExerciseSelections(initialSelections)
           setActiveTab(categories[0])
         } else {
@@ -71,28 +83,62 @@ export default function Exercises() {
     setTimeout(() => setShowAlert(false), 2000)
   }
 
-  const updateSetsCount = (exerciseId, nextCount) => {
+  const moveToNextExercise = (exerciseId) => {
+    if (!activeTab) return
+
+    const currentExercises = exerciseTemplates[activeTab] || []
+    const currentIndex = currentExercises.findIndex((exercise) => exercise.id === exerciseId)
+    const nextExercise = currentExercises[currentIndex + 1]
+
+    if (nextExercise) {
+      const nextCard = document.getElementById(`exercise-card-${nextExercise.id}`)
+      if (nextCard) {
+        nextCard.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+  }
+
+  const chooseSetPlan = (exerciseId, nextCount) => {
     setExerciseSelections((prev) => {
-      const current = prev[exerciseId] || { setsCount: 1, weights: [null], activeSetIndex: 0 }
+      const current = prev[exerciseId] || { setsCount: 0, isSkipped: false, weights: [], activeSetIndex: 0 }
+
+      if (nextCount === 0) {
+        return {
+          ...prev,
+          [exerciseId]: {
+            ...current,
+            setsCount: 0,
+            isSkipped: true,
+            weights: [],
+            activeSetIndex: 0,
+          },
+        }
+      }
+
       const resizedWeights = Array.from({ length: nextCount }, (_, index) => current.weights[index] ?? null)
 
       return {
         ...prev,
         [exerciseId]: {
           ...current,
+          isSkipped: false,
           setsCount: nextCount,
           weights: resizedWeights,
           activeSetIndex: Math.min(current.activeSetIndex, nextCount - 1),
         },
       }
     })
+
+    if (nextCount === 0) {
+      moveToNextExercise(exerciseId)
+    }
   }
 
   const setActiveSet = (exerciseId, setIndex) => {
     setExerciseSelections((prev) => ({
       ...prev,
       [exerciseId]: {
-        ...(prev[exerciseId] || { setsCount: 1, weights: [null], activeSetIndex: 0 }),
+        ...(prev[exerciseId] || { setsCount: 0, isSkipped: false, weights: [], activeSetIndex: 0 }),
         activeSetIndex: setIndex,
       },
     }))
@@ -100,7 +146,7 @@ export default function Exercises() {
 
   const assignWeightToActiveSet = (exerciseId, weight) => {
     setExerciseSelections((prev) => {
-      const current = prev[exerciseId] || { setsCount: 1, weights: [null], activeSetIndex: 0 }
+      const current = prev[exerciseId] || { setsCount: 0, isSkipped: false, weights: [], activeSetIndex: 0 }
       const nextWeights = [...current.weights]
       nextWeights[current.activeSetIndex] = weight
 
@@ -108,14 +154,22 @@ export default function Exercises() {
         ...prev,
         [exerciseId]: {
           ...current,
+          isSkipped: false,
           weights: nextWeights,
         },
       }
     })
   }
 
+  const weightsForObject = (objectName) => {
+    const normalized = (objectName || '').toLowerCase()
+    if (normalized === 'bar') return weightCatalog.bar
+    if (normalized === 'machine') return weightCatalog.machine
+    return weightCatalog.dumbel
+  }
+
   const handleAddAllForMuscle = async () => {
-    if (!activeTab) return
+    if (!activeTab || !workoutSessionId) return
 
     const exercisesInTab = exerciseTemplates[activeTab] || []
     if (exercisesInTab.length === 0) {
@@ -132,15 +186,23 @@ export default function Exercises() {
         return
       }
 
-      const missingSet = selection.weights.findIndex((weight) => weight == null)
-      if (missingSet !== -1) {
-        setError(`Please select weight for ${exercise.name} - Set ${missingSet + 1}`)
+      if (!selection.isSkipped && selection.setsCount === 0) {
+        setError(`Pick Set1-Set4 or Skip for ${exercise.name}`)
         return
       }
 
+      if (!selection.isSkipped) {
+        const missingSet = selection.weights.findIndex((weight) => weight == null)
+        if (missingSet !== -1) {
+          setError(`Please select weight for ${exercise.name} - Set ${missingSet + 1}`)
+          return
+        }
+      }
+
       payloadExercises.push({
-        exerciseName: exercise.name,
-        weights: selection.weights,
+        exerciseTemplateId: exercise.id,
+        isSkipped: selection.isSkipped,
+        weights: selection.isSkipped ? [] : selection.weights,
       })
     }
 
@@ -149,9 +211,9 @@ export default function Exercises() {
 
     try {
       const result = await api.createExerciseLogsBulk({
+        workoutSessionId,
         username: 'Aarush',
         date: selectedDate,
-        muscleGroup: activeTab,
         exercises: payloadExercises,
       })
 
@@ -202,61 +264,75 @@ export default function Exercises() {
           {activeTab && (
             <div className="exercises-section">
               <h2>{activeTab} Exercises</h2>
-              <div className="exercises-grid">
+              <div className="exercises-stack">
                 {(exerciseTemplates[activeTab] || []).map((exercise) => (
-                  <div key={exercise.id} className="exercise-card">
+                  <div key={exercise.id} className="exercise-card" id={`exercise-card-${exercise.id}`}>
                     <div className="exercise-card-content">
-                      <h4>{exercise.name}</h4>
-                      <div className="exercise-config-row">
-                        <label htmlFor={`sets-${exercise.id}`}>Sets</label>
-                        <select
-                          id={`sets-${exercise.id}`}
-                          value={exerciseSelections[exercise.id]?.setsCount || 1}
-                          onChange={(event) => updateSetsCount(exercise.id, Number(event.target.value))}
-                          className="sets-select"
+                      <div className="exercise-header-row">
+                        <h4>{exercise.name}</h4>
+                        <span className="exercise-object-chip">Object: {exercise.object}</span>
+                      </div>
+
+                      <div className="set-plan-grid">
+                        {[1, 2, 3, 4].map((count) => (
+                          <button
+                            key={`${exercise.id}-count-${count}`}
+                            className={`set-plan-button ${exerciseSelections[exercise.id]?.setsCount === count && !exerciseSelections[exercise.id]?.isSkipped ? 'selected' : ''}`}
+                            onClick={() => chooseSetPlan(exercise.id, count)}
+                          >
+                            Set {count}
+                          </button>
+                        ))}
+                        <button
+                          className={`set-plan-button skip ${exerciseSelections[exercise.id]?.isSkipped ? 'selected' : ''}`}
+                          onClick={() => chooseSetPlan(exercise.id, 0)}
                         >
-                          <option value={1}>1</option>
-                          <option value={2}>2</option>
-                          <option value={3}>3</option>
-                          <option value={4}>4</option>
-                          <option value={5}>5</option>
-                        </select>
+                          Skip
+                        </button>
                       </div>
 
-                      <div className="set-tags">
-                        {Array.from({ length: exerciseSelections[exercise.id]?.setsCount || 1 }).map((_, index) => {
-                          const weight = exerciseSelections[exercise.id]?.weights?.[index]
-                          const isActive = (exerciseSelections[exercise.id]?.activeSetIndex || 0) === index
+                      {exerciseSelections[exercise.id]?.isSkipped && (
+                        <div className="skip-note">This exercise is skipped. 0 sets will be stored.</div>
+                      )}
 
-                          return (
-                            <button
-                              key={`${exercise.id}-set-${index + 1}`}
-                              className={`set-tag ${isActive ? 'active' : ''}`}
-                              onClick={() => setActiveSet(exercise.id, index)}
-                            >
-                              Set {index + 1}: {weight ?? '-'}
-                            </button>
-                          )
-                        })}
-                      </div>
+                      {!exerciseSelections[exercise.id]?.isSkipped && exerciseSelections[exercise.id]?.setsCount > 0 && (
+                        <>
+                          <div className="set-tags">
+                            {Array.from({ length: exerciseSelections[exercise.id]?.setsCount || 0 }).map((_, index) => {
+                              const weight = exerciseSelections[exercise.id]?.weights?.[index]
+                              const isActive = (exerciseSelections[exercise.id]?.activeSetIndex || 0) === index
 
-                      <div className="weight-grid">
-                        {WEIGHT_OPTIONS.map((weight) => {
-                          const activeSet = exerciseSelections[exercise.id]?.activeSetIndex || 0
-                          const selectedWeight = exerciseSelections[exercise.id]?.weights?.[activeSet]
-                          const isSelected = selectedWeight === weight
+                              return (
+                                <button
+                                  key={`${exercise.id}-set-${index + 1}`}
+                                  className={`set-tag ${isActive ? 'active' : ''}`}
+                                  onClick={() => setActiveSet(exercise.id, index)}
+                                >
+                                  Set {index + 1}: {weight ?? '-'}
+                                </button>
+                              )
+                            })}
+                          </div>
 
-                          return (
-                            <button
-                              key={`${exercise.id}-weight-${weight}`}
-                              className={`weight-option ${isSelected ? 'selected' : ''}`}
-                              onClick={() => assignWeightToActiveSet(exercise.id, weight)}
-                            >
-                              {weight}
-                            </button>
-                          )
-                        })}
-                      </div>
+                          <div className="weight-grid">
+                            {weightsForObject(exercise.object).map((weight) => {
+                              const activeSet = exerciseSelections[exercise.id]?.activeSetIndex || 0
+                              const selectedWeight = exerciseSelections[exercise.id]?.weights?.[activeSet]
+                              const isSelected = selectedWeight === weight
+
+                              return (
+                                <button
+                                  key={`${exercise.id}-weight-${weight}`}
+                                  className={`weight-option ${isSelected ? 'selected' : ''}`}
+                                  onClick={() => assignWeightToActiveSet(exercise.id, weight)}
+                                >
+                                  {weight}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
