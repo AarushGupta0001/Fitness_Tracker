@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import { api } from '../utils/api'
+import { getUsername } from '../utils/auth'
 import '../styles/Exercises.css'
 
 export default function Exercises() {
   const { selectedDate } = useParams()
   const navigate = useNavigate()
+  const username = getUsername()
   const [selectedCategories, setSelectedCategories] = useState([])
   const [workoutSessionId, setWorkoutSessionId] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -20,6 +22,11 @@ export default function Exercises() {
   const [alertMessage, setAlertMessage] = useState('')
 
   useEffect(() => {
+    if (!username) {
+      navigate('/login')
+      return
+    }
+
     const fetchData = async () => {
       try {
         const sessions = await api.getWorkoutSessionsByDate(selectedDate)
@@ -75,7 +82,7 @@ export default function Exercises() {
     }
 
     fetchData()
-  }, [selectedDate])
+  }, [navigate, selectedDate, username])
 
   const handleAddExercise = (exerciseName) => {
     setAlertMessage(`${exerciseName} added successfully! ✓`)
@@ -212,7 +219,7 @@ export default function Exercises() {
     try {
       const result = await api.createExerciseLogsBulk({
         workoutSessionId,
-        username: 'Aarush',
+        username,
         date: selectedDate,
         exercises: payloadExercises,
       })
@@ -257,14 +264,43 @@ export default function Exercises() {
 
         {/* Main Content */}
         <div className="exercises-main">
-          {error && <div className="error-message">{error}</div>}
+          <div className="exercises-toolbar">
+            <div>
+              <h2>{activeTab ? `${activeTab} Exercises` : 'Exercises'}</h2>
+              <p>Select sets and weights, then save all exercises.</p>
+            </div>
+            <div className="exercises-actions">
+              <button
+                onClick={handleAddAllForMuscle}
+                disabled={!activeTab || addingAll}
+                className="add-all-button"
+              >
+                {addingAll ? 'Saving...' : `Add All ${activeTab || ''} Exercises`}
+              </button>
+              <button
+                onClick={() => navigate('/')}
+                className="back-button"
+              >
+                Back to Landing
+              </button>
+              <button
+                onClick={() => navigate(`/dashboard/${selectedDate}`)}
+                className="back-button"
+              >
+                Back to Dashboard
+              </button>
+            </div>
+          </div>
 
-          {showAlert && <div className="success-alert">{alertMessage}</div>}
+          <div className="exercises-alerts">
+            {error && <div className="error-message">{error}</div>}
+            {showAlert && <div className="success-alert">{alertMessage}</div>}
+          </div>
 
-          {activeTab && (
-            <div className="exercises-section">
-              <h2>{activeTab} Exercises</h2>
-              <div className="exercises-stack">
+          <div className="exercises-scroll">
+            {activeTab && (
+              <div className="exercises-section">
+                <div className="exercises-stack">
                 {(exerciseTemplates[activeTab] || []).map((exercise) => (
                   <div key={exercise.id} className="exercise-card" id={`exercise-card-${exercise.id}`}>
                     <div className="exercise-card-content">
@@ -336,33 +372,12 @@ export default function Exercises() {
                     </div>
                   </div>
                 ))}
+                </div>
+                {activeTab && (exerciseTemplates[activeTab] || []).length === 0 && (
+                  <div className="error-message">No exercises configured for {activeTab} yet.</div>
+                )}
               </div>
-              {activeTab && (exerciseTemplates[activeTab] || []).length === 0 && (
-                <div className="error-message">No exercises configured for {activeTab} yet.</div>
-              )}
-            </div>
-          )}
-
-          <div className="button-group">
-            <button
-              onClick={handleAddAllForMuscle}
-              disabled={!activeTab || addingAll}
-              className="add-all-button"
-            >
-              {addingAll ? 'Saving...' : `Add All ${activeTab || ''} Exercises`}
-            </button>
-            <button
-              onClick={() => navigate('/')}
-              className="back-button"
-            >
-              Back to Landing
-            </button>
-            <button
-              onClick={() => navigate(`/dashboard/${selectedDate}`)}
-              className="back-button"
-            >
-              Back to Dashboard
-            </button>
+            )}
           </div>
         </div>
       </div>

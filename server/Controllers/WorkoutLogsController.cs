@@ -1,4 +1,5 @@
 using FitnessTracker.Api.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,18 +7,22 @@ namespace FitnessTracker.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class WorkoutLogsController(AppDbContext context) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<WorkoutLogListItemResponse>>> GetWorkoutLogs([FromQuery] string? username)
     {
+        var claimUsername = User.FindFirst("username")?.Value;
+        var effectiveUsername = claimUsername ?? username;
+
         var sessionsQuery = context.WorkoutSessions
             .Include(s => s.WorkoutType)
             .AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(username))
+        if (!string.IsNullOrWhiteSpace(effectiveUsername))
         {
-            sessionsQuery = sessionsQuery.Where(s => s.Username == username);
+            sessionsQuery = sessionsQuery.Where(s => s.Username == effectiveUsername);
         }
 
         var sessions = await sessionsQuery

@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { clearAuth, getUsername } from '../utils/auth'
 
 export default function Navbar({ selectedDate }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const profileRef = useRef(null)
-  const username = 'Aarush'
+  const navigate = useNavigate()
+  const username = getUsername() || 'User'
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -26,9 +28,14 @@ export default function Navbar({ selectedDate }) {
 
   const navLinks = [
     { name: 'Home', path: '/' },
-    { name: 'Workouts', path: '/workouts' },
-    { name: 'Settings', path: '/settings' }
+    { name: 'Calendar', path: '/calendar' },
+    { name: 'Logs', path: '/logs' }
   ]
+
+  const handleSignOut = () => {
+    clearAuth()
+    navigate('/login')
+  }
 
   return (
     <nav className="bg-[#131313] border-b border-[#2A2A2A] text-[#e5e2e1] px-6 py-4 flex items-center justify-between sticky top-0 z-50">
@@ -74,24 +81,8 @@ export default function Navbar({ selectedDate }) {
           }`}
         >
           <h2 className='py-2 text-center text-xs tracking-wider uppercase text-[#888] transition-colors cursor-default'>{username}</h2>
-          <Link 
-            to="/profile" 
-            onClick={() => setIsProfileOpen(false)}
-            className="flex items-center gap-3 px-4 py-2.5 text-xs tracking-wider uppercase text-[#888] hover:text-grey-500 hover:bg-white/5 transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            Profile
-          </Link>
-          <Link 
-            to="/stats" 
-            onClick={() => setIsProfileOpen(false)}
-            className="flex items-center gap-3 px-4 py-2.5 text-xs tracking-wider uppercase text-[#888] hover:text-grey-500 hover:bg-white/5 transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-            Stats
-          </Link>
           <button 
-            onClick={() => setIsProfileOpen(false)}
+            onClick={handleSignOut}
             className="w-full flex items-center gap-3 text-left px-4 py-2.5 text-xs tracking-wider uppercase text-[#888] hover:text-red-500 hover:bg-white/5 transition-colors outline-none"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>

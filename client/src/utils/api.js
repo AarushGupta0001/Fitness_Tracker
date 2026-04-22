@@ -1,3 +1,5 @@
+import { getToken } from './auth'
+
 const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL
 
 const API_BASE_URLS = configuredApiBaseUrl
@@ -16,6 +18,21 @@ const withJsonHeaders = (options = {}) => ({
     ...(options.headers || {}),
   },
 })
+
+const withAuthHeaders = (options = {}) => {
+  const token = getToken()
+  if (!token) {
+    return options
+  }
+
+  return {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      Authorization: `Bearer ${token}`,
+    },
+  }
+}
 
 const requestWithFallback = async (path, options = {}) => {
   let lastError = null
@@ -38,20 +55,43 @@ const requestWithFallback = async (path, options = {}) => {
 }
 
 export const api = {
+  login: async (payload) => {
+    const response = await requestWithFallback(
+      '/Auth/login',
+      withJsonHeaders({
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+    )
+    return response.json()
+  },
+  register: async (payload) => {
+    const response = await requestWithFallback(
+      '/Auth/register',
+      withJsonHeaders({
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+    )
+    return response.json()
+  },
   // Workout Sessions
   createWorkoutSession: async (username, selectedMuscleGroups, date) => {
     const response = await requestWithFallback(
       '/WorkoutSessions',
-      withJsonHeaders({
+      withAuthHeaders(withJsonHeaders({
         method: 'POST',
         body: JSON.stringify({ username, selectedMuscleGroups, date }),
-      })
+      }))
     )
     return response.json()
   },
 
   getWorkoutSessionsByDate: async (date) => {
-    const response = await requestWithFallback(`/WorkoutSessions/date/${date}`)
+    const response = await requestWithFallback(
+      `/WorkoutSessions/date/${date}`,
+      withAuthHeaders()
+    )
     return response.json()
   },
 
@@ -59,21 +99,27 @@ export const api = {
   createExercise: async (exercise) => {
     const response = await requestWithFallback(
       '/Exercises',
-      withJsonHeaders({
+      withAuthHeaders(withJsonHeaders({
         method: 'POST',
         body: JSON.stringify(exercise),
-      })
+      }))
     )
     return response.json()
   },
 
   getExercisesByDate: async (date) => {
-    const response = await requestWithFallback(`/Exercises/date/${date}`)
+    const response = await requestWithFallback(
+      `/Exercises/date/${date}`,
+      withAuthHeaders()
+    )
     return response.json()
   },
 
   getExercisesByDateAndMuscleGroup: async (date, muscleGroup) => {
-    const response = await requestWithFallback(`/Exercises/date/${date}/musclegroup/${muscleGroup}`)
+    const response = await requestWithFallback(
+      `/Exercises/date/${date}/musclegroup/${muscleGroup}`,
+      withAuthHeaders()
+    )
     return response.json()
   },
 
@@ -92,16 +138,16 @@ export const api = {
   },
 
   deleteExercise: async (id) => {
-    await requestWithFallback(`/Exercises/${id}`, { method: 'DELETE' })
+    await requestWithFallback(`/Exercises/${id}`, withAuthHeaders({ method: 'DELETE' }))
   },
 
   createExerciseLogsBulk: async (payload) => {
     const response = await requestWithFallback(
       '/ExerciseLogs/bulk',
-      withJsonHeaders({
+      withAuthHeaders(withJsonHeaders({
         method: 'POST',
         body: JSON.stringify(payload),
-      })
+      }))
     )
 
     return response.json()
@@ -109,7 +155,10 @@ export const api = {
 
   getWorkoutLogs: async (username = '') => {
     const query = username ? `?username=${encodeURIComponent(username)}` : ''
-    const response = await requestWithFallback(`/WorkoutLogs${query}`)
+    const response = await requestWithFallback(
+      `/WorkoutLogs${query}`,
+      withAuthHeaders()
+    )
     return response.json()
   },
 }

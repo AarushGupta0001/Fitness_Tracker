@@ -5,6 +5,7 @@ namespace FitnessTracker.Api.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
+    public DbSet<User> Users => Set<User>();
     public DbSet<Workout> Workouts => Set<Workout>();
     public DbSet<Exercise> Exercises => Set<Exercise>();
     public DbSet<WorkoutSession> WorkoutSessions => Set<WorkoutSession>();
@@ -48,6 +49,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasIndex(w => w.Code)
             .IsUnique();
 
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Username)
+            .IsUnique();
+
         modelBuilder.Entity<ExerciseObjectType>()
             .HasIndex(o => o.Name)
             .IsUnique();
@@ -85,9 +90,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<WorkoutType>().HasData(
             new WorkoutType { Id = 1, Code = "push", Name = "Push" },
             new WorkoutType { Id = 2, Code = "pull", Name = "Pull" },
-            new WorkoutType { Id = 3, Code = "leg-shoulder", Name = "Leg + Shoulder" },
-            new WorkoutType { Id = 4, Code = "upper", Name = "Upper" },
-            new WorkoutType { Id = 5, Code = "lower", Name = "Lower" }
+            new WorkoutType { Id = 3, Code = "leg-shoulder", Name = "Leg & Shoulder" },
+            new WorkoutType { Id = 4, Code = "upper", Name = "Mixed Upper" },
+            new WorkoutType { Id = 5, Code = "lower", Name = "Legs" }
         );
 
         modelBuilder.Entity<WeightDb>().HasData(

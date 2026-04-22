@@ -1,5 +1,6 @@
 using FitnessTracker.Api.Data;
 using FitnessTracker.Api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,11 +8,25 @@ namespace FitnessTracker.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ExerciseLogsController(AppDbContext context) : ControllerBase
 {
     [HttpPost("bulk")]
     public async Task<ActionResult<BulkExerciseLogResponse>> CreateBulkLogs(CreateBulkExerciseLogRequest request)
     {
+        var claimUsername = User.FindFirst("username")?.Value;
+        var username = claimUsername ?? request.Username;
+
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            return Unauthorized("Missing user context");
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Username) && request.Username != username)
+        {
+            return Forbid();
+        }
+
         if (!DateTime.TryParse(request.Date, out var parsedDate))
         {
             return BadRequest("Invalid date format");
@@ -53,7 +68,7 @@ public class ExerciseLogsController(AppDbContext context) : ControllerBase
                 {
                     WorkoutSessionId = session.Id,
                     ExerciseTemplateId = template.Id,
-                    Username = request.Username,
+                    Username = username,
                     Date = parsedDate.Date,
                     MuscleGroup = template.MuscleGroup,
                     ExerciseName = template.Name,
@@ -101,7 +116,7 @@ public class ExerciseLogsController(AppDbContext context) : ControllerBase
                 {
                     WorkoutSessionId = session.Id,
                     ExerciseTemplateId = template.Id,
-                    Username = request.Username,
+                    Username = username,
                     Date = parsedDate.Date,
                     MuscleGroup = template.MuscleGroup,
                     ExerciseName = template.Name,

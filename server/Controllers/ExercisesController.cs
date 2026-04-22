@@ -1,5 +1,6 @@
 using FitnessTracker.Api.Data;
 using FitnessTracker.Api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,11 +8,25 @@ namespace FitnessTracker.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ExercisesController(AppDbContext context) : ControllerBase
 {
     [HttpPost]
     public async Task<ActionResult<Exercise>> CreateExercise(CreateExerciseRequest request)
     {
+        var claimUsername = User.FindFirst("username")?.Value;
+        var username = claimUsername ?? request.Username;
+
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            return Unauthorized("Missing user context");
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Username) && request.Username != username)
+        {
+            return Forbid();
+        }
+
         var dateToStore = DateTime.UtcNow.Date;
         if (!string.IsNullOrEmpty(request.Date) && DateTime.TryParse(request.Date, out var parsedDate))
         {
@@ -26,7 +41,7 @@ public class ExercisesController(AppDbContext context) : ControllerBase
             Reps = request.Reps,
             Date = dateToStore,
             MuscleGroup = request.MuscleGroup,
-            Username = request.Username
+            Username = username
         };
 
         context.Exercises.Add(exercise);

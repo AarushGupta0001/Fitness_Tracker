@@ -53,7 +53,52 @@
 .exercises-main {
   flex: 1;
   padding: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow: hidden;
+}
+
+.exercises-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(17, 32, 58, 0.08);
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
+}
+
+.exercises-toolbar h2 {
+  margin: 0;
+  color: #1f2f49;
+  font-size: 1.6rem;
+}
+
+.exercises-toolbar p {
+  margin: 0.35rem 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.exercises-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: flex-end;
+}
+
+.exercises-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.exercises-scroll {
+  flex: 1;
   overflow-y: auto;
+  padding-right: 0.3rem;
 }
 
 .exercises-section h2 {
@@ -225,14 +270,6 @@
   color: #334155;
 }
 
-.button-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-  justify-content: center;
-  margin-top: 1.2rem;
-}
-
 .add-all-button {
   border: 0;
   border-radius: 12px;
@@ -256,6 +293,17 @@
   color: #9a3412;
   font-weight: 700;
   cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .exercises-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .exercises-actions {
+    justify-content: flex-start;
+  }
 }
 
 @keyframes cardIn {

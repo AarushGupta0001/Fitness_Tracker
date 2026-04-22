@@ -1,5 +1,6 @@
 using FitnessTracker.Api.Data;
 using FitnessTracker.Api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,11 +8,25 @@ namespace FitnessTracker.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class WorkoutSessionsController(AppDbContext context) : ControllerBase
 {
     [HttpPost]
     public async Task<ActionResult<WorkoutSessionResponse>> CreateWorkoutSession(CreateWorkoutSessionRequest request)
     {
+        var claimUsername = User.FindFirst("username")?.Value;
+        var username = claimUsername ?? request.Username;
+
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            return Unauthorized("Missing user context");
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Username) && request.Username != username)
+        {
+            return Forbid();
+        }
+
         if (string.IsNullOrWhiteSpace(request.SelectedMuscleGroups))
         {
             return BadRequest("SelectedMuscleGroups cannot be empty");
@@ -39,7 +54,7 @@ public class WorkoutSessionsController(AppDbContext context) : ControllerBase
 
         var session = new WorkoutSession
         {
-            Username = request.Username,
+            Username = username,
             Date = parsedDate.Date,
             SelectedMuscleGroups = request.SelectedMuscleGroups,
             WorkoutTypeId = workoutType.Id,
@@ -102,19 +117,14 @@ public class WorkoutSessionsController(AppDbContext context) : ControllerBase
         var hasShoulder = selectedGroups.Contains("shoulder");
         var hasLegs = selectedGroups.Contains("legs");
 
-        if (hasChest && hasTriceps && selectedGroups.Count == 2)
-        {
-            return "push";
-        }
-
         if (hasBack && hasBiceps && selectedGroups.Count == 2)
         {
             return "pull";
         }
 
-        if (hasLegs && hasShoulder && selectedGroups.Count == 2)
+        if (hasChest && hasTriceps && !hasLegs && (!hasShoulder || selectedGroups.Count >= 3))
         {
-            return "leg-shoulder";
+            return "push";
         }
 
         if (hasLegs && selectedGroups.Count == 1)
@@ -122,7 +132,17 @@ public class WorkoutSessionsController(AppDbContext context) : ControllerBase
             return "lower";
         }
 
-        if (!hasLegs && selectedGroups.Count >= 1)
+        if (hasLegs && hasShoulder && selectedGroups.Count == 2)
+        {
+            return "leg-shoulder";
+        }
+
+        if (hasLegs && selectedGroups.Count > 1)
+        {
+            return "lower";
+        }
+
+        if (!hasLegs)
         {
             return "upper";
         }
