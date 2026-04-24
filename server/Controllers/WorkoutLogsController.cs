@@ -1,4 +1,5 @@
 using FitnessTracker.Api.Data;
+using FitnessTracker.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -84,6 +85,88 @@ public class WorkoutLogsController(AppDbContext context) : ControllerBase
         }).ToList();
 
         return Ok(sessionLogs);
+    }
+
+    [HttpGet("last-similar")]
+    public async Task<ActionResult<WorkoutLogListItemResponse>> GetLastSimilarWorkout([FromQuery] string muscleGroup, [FromQuery] string? username, [FromQuery] int? excludeSessionId)
+    {
+        var claimUsername = User.FindFirst("username")?.Value;
+        var effectiveUsername = claimUsername ?? username;
+
+        if (string.IsNullOrWhiteSpace(effectiveUsername))
+        {
+            return Unauthorized("Missing user context");
+        }
+
+        if (!Enum.TryParse<MuscleGroup>(muscleGroup, true, out var parsedMuscleGroup))
+        {
+            return BadRequest("Invalid muscleGroup value.");
+        }
+
+        var candidateSessions = await context.WorkoutSessions
+            .Include(s => s.WorkoutType)
+            .Where(s => s.Username == effectiveUsername)
+            .OrderByDescending(s => s.Date)
+            .ThenByDescending(s => s.CreatedAt)
+            .Take(30)
+            .ToListAsync();
+
+        var targetSession = candidateSessions.FirstOrDefault(session =>
+            (!excludeSessionId.HasValue || session.Id != excludeSessionId.Value) &&
+            session.SelectedMuscleGroups
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Any(group => string.Equals(group, parsedMuscleGroup.ToString(), StringComparison.OrdinalIgnoreCase)));
+
+        if (targetSession == null)
+        {
+            return NotFound();
+        }
+
+        var logs = await context.ExerciseLogs
+            .Include(l => l.ExerciseTemplate)
+                .ThenInclude(t => t!.ExerciseObjectType)
+            .Where(l => l.WorkoutSessionId == targetSession.Id && l.MuscleGroup == parsedMuscleGroup)
+            .OrderBy(l => l.CreatedAt)
+            .ToListAsync();
+
+        var exercises = logs
+            .GroupBy(log => new
+            {
+                log.ExerciseTemplateId,
+                log.ExerciseName,
+                log.MuscleGroup,
+                ObjectName = log.ExerciseTemplate?.ExerciseObjectType?.Name ?? string.Empty
+            })
+            .Select(group =>
+            {
+                var orderedSets = group.OrderBy(g => g.SetNumber).ToList();
+                var isSkipped = orderedSets.Any(s => s.IsSkipped);
+
+                return new WorkoutLogExerciseResponse
+                {
+                    ExerciseTemplateId = group.Key.ExerciseTemplateId ?? 0,
+                    ExerciseName = group.Key.ExerciseName,
+                    MuscleGroup = group.Key.MuscleGroup.ToString(),
+                    Object = group.Key.ObjectName,
+                    IsSkipped = isSkipped,
+                    SetsCount = isSkipped ? 0 : orderedSets.Count,
+                    Sets = orderedSets.Select(s => new WorkoutLogSetResponse
+                    {
+                        SetNumber = s.SetNumber,
+                        Weight = s.Weight
+                    }).ToList()
+                };
+            })
+            .OrderBy(e => e.ExerciseName)
+            .ToList();
+
+        return Ok(new WorkoutLogListItemResponse
+        {
+            WorkoutSessionId = targetSession.Id,
+            Date = targetSession.Date,
+            Workout = targetSession.WorkoutType?.Name ?? string.Empty,
+            Exercises = exercises
+        });
     }
 }
 

@@ -13,7 +13,7 @@ export default function Landing() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0e0e0e]">
+    <div className="landing-wrapper">
       <Navbar />
       <div className="landing-container">
         <div className="landing-header">

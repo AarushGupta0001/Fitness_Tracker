@@ -29,7 +29,8 @@ export default function Navbar({ selectedDate }) {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Calendar', path: '/calendar' },
-    { name: 'Logs', path: '/logs' }
+    { name: 'Logs', path: '/logs' },
+    { name: 'Progress', path: '/progress' }
   ]
 
   const handleSignOut = () => {

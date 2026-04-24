@@ -21,5 +21,7 @@ public class WorkoutSession
 
     public WorkoutType? WorkoutType { get; set; }
 
+    public FatigueLevel? FatigueLevel { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -1,6 +1,4 @@
 .landing-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -9,7 +7,7 @@
 
 .landing-header {
   text-align: center;
-  color: white;
+  color: var(--color-text-main);
   margin-bottom: 3rem;
   margin-top: 2rem;
 }
@@ -18,11 +16,35 @@
   font-size: 3rem;
   margin: 0;
   margin-bottom: 1rem;
-  font-weight: 700;
+  font-weight: 800;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .landing-header p {
   font-size: 1.2rem;
   margin: 0;
-  opacity: 0.9;
+  color: var(--color-text-light);
+  font-weight: 500;
+}
+
+.hero-button {
+  background: var(--primary-gradient);
+  color: white;
+  border: none;
+  padding: 1rem 3rem;
+  font-size: 1.2rem;
+  font-weight: 800;
+  border-radius: var(--radius-md);
+  margin-top: 1.5rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.3);
+}
+
+.hero-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
 }

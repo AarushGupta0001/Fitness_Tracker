@@ -16,6 +16,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<WeightBar> WeightBar => Set<WeightBar>();
     public DbSet<WeightMachine> WeightMachine => Set<WeightMachine>();
     public DbSet<WorkoutType> WorkoutTypes => Set<WorkoutType>();
+    public DbSet<PersonalRecord> PersonalRecords => Set<PersonalRecord>();
+    public DbSet<ProgressiveOverloadInsight> ProgressiveOverloadInsights => Set<ProgressiveOverloadInsight>();
+    public DbSet<WeeklyPerformanceInsight> WeeklyPerformanceInsights => Set<WeeklyPerformanceInsight>();
+    public DbSet<RecoveryInsight> RecoveryInsights => Set<RecoveryInsight>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -69,6 +73,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasForeignKey(w => w.WorkoutTypeId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        modelBuilder.Entity<WorkoutSession>()
+            .Property(w => w.FatigueLevel)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
         modelBuilder.Entity<ExerciseLog>()
             .HasOne(e => e.WorkoutSession)
             .WithMany()
@@ -80,6 +89,53 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .WithMany()
             .HasForeignKey(e => e.ExerciseTemplateId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<PersonalRecord>()
+            .Property(p => p.PreviousBestWeight)
+            .HasPrecision(10, 2);
+
+        modelBuilder.Entity<PersonalRecord>()
+            .Property(p => p.NewBestWeight)
+            .HasPrecision(10, 2);
+
+        modelBuilder.Entity<PersonalRecord>()
+            .HasOne(p => p.WorkoutSession)
+            .WithMany()
+            .HasForeignKey(p => p.WorkoutSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PersonalRecord>()
+            .HasOne(p => p.ExerciseTemplate)
+            .WithMany()
+            .HasForeignKey(p => p.ExerciseTemplateId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<PersonalRecord>()
+            .HasIndex(p => new { p.Username, p.ExerciseTemplateId, p.Date });
+
+        modelBuilder.Entity<ProgressiveOverloadInsight>()
+            .Property(p => p.RecommendedIncrement)
+            .HasPrecision(10, 2);
+
+        modelBuilder.Entity<ProgressiveOverloadInsight>()
+            .HasIndex(p => new { p.Username, p.MuscleGroup, p.CreatedAt });
+
+        modelBuilder.Entity<RecoveryInsight>()
+            .Property(r => r.FatigueLevel)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        modelBuilder.Entity<RecoveryInsight>()
+            .HasOne(r => r.WorkoutSession)
+            .WithMany()
+            .HasForeignKey(r => r.WorkoutSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RecoveryInsight>()
+            .HasIndex(r => new { r.Username, r.CreatedAt });
+
+        modelBuilder.Entity<WeeklyPerformanceInsight>()
+            .HasIndex(w => new { w.Username, w.WeekStartDate });
 
         modelBuilder.Entity<ExerciseObjectType>().HasData(
             new ExerciseObjectType { Id = 1, Name = "dumbel" },

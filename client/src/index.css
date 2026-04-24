@@ -1,10 +1,33 @@
+:root {
+  --primary-gradient: linear-gradient(120deg, #f97316, #ef4444);
+  --bg-gradient: radial-gradient(circle at 20% 20%, #ffecd2 0%, #fcb69f 50%, #f3f8ff 100%);
+  --card-gradient: linear-gradient(140deg, #ffffff, #f8fafc);
+  
+  --color-primary: #f97316;
+  --color-primary-dark: #ea580c;
+  --color-text-main: #1f2f49;
+  --color-text-light: #64748b;
+  
+  --shadow-card: 0 12px 32px rgba(15, 23, 42, 0.08);
+  --shadow-hover: 0 8px 20px rgba(249, 115, 22, 0.2);
+  
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+  
+  --border-light: 1px solid rgba(17, 32, 58, 0.08);
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #f3f4f6;
-  color: #111827;
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--color-text-main);
+  min-height: 100vh;
 }

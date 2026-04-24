@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard'
 import Exercises from './pages/Exercises'
 import LandingPage from './pages/LandingPage'
 import WorkoutLogs from './pages/WorkoutLogs'
+import Progress from './pages/Progress'
 import './App.css'
 
 function RequireAuth({ children }) {
@@ -60,6 +61,14 @@ function App() {
           element={
             <RequireAuth>
               <WorkoutLogs />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/progress"
+          element={
+            <RequireAuth>
+              <Progress />
             </RequireAuth>
           }
         />

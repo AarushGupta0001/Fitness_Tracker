@@ -58,6 +58,7 @@ public class WorkoutSessionsController(AppDbContext context) : ControllerBase
             Date = parsedDate.Date,
             SelectedMuscleGroups = request.SelectedMuscleGroups,
             WorkoutTypeId = workoutType.Id,
+            FatigueLevel = ParseFatigueLevel(request.FatigueLevel),
             CreatedAt = DateTime.UtcNow
         };
 
@@ -72,6 +73,7 @@ public class WorkoutSessionsController(AppDbContext context) : ControllerBase
             SelectedMuscleGroups = session.SelectedMuscleGroups,
             WorkoutType = workoutType.Name,
             WorkoutTypeCode = workoutType.Code,
+            FatigueLevel = session.FatigueLevel?.ToString(),
             CreatedAt = session.CreatedAt
         });
     }
@@ -160,8 +162,21 @@ public class WorkoutSessionsController(AppDbContext context) : ControllerBase
             SelectedMuscleGroups = session.SelectedMuscleGroups,
             WorkoutType = session.WorkoutType?.Name ?? string.Empty,
             WorkoutTypeCode = session.WorkoutType?.Code ?? string.Empty,
+            FatigueLevel = session.FatigueLevel?.ToString(),
             CreatedAt = session.CreatedAt
         };
+    }
+
+    private static FatigueLevel? ParseFatigueLevel(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        return Enum.TryParse<FatigueLevel>(value, true, out var parsed)
+            ? parsed
+            : null;
     }
 }
 
@@ -170,6 +185,7 @@ public class CreateWorkoutSessionRequest
     public string Username { get; set; } = string.Empty;
     public string SelectedMuscleGroups { get; set; } = string.Empty;
     public string Date { get; set; } = string.Empty;
+    public string? FatigueLevel { get; set; }
 }
 
 public class WorkoutSessionResponse
@@ -180,5 +196,6 @@ public class WorkoutSessionResponse
     public string SelectedMuscleGroups { get; set; } = string.Empty;
     public string WorkoutType { get; set; } = string.Empty;
     public string WorkoutTypeCode { get; set; } = string.Empty;
+    public string? FatigueLevel { get; set; }
     public DateTime CreatedAt { get; set; }
 }

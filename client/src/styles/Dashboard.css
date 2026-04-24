@@ -1,6 +1,6 @@
 .dashboard-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  display: flex;
+  flex-direction: column;
 }
 
 .dashboard-content {
@@ -12,9 +12,9 @@
 .workouts-heading {
   text-align: center;
   font-size: 2.5rem;
-  color: #333;
+  color: var(--color-text-main);
   margin: 2rem 0;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .categories-grid {
@@ -39,21 +39,21 @@
 }
 
 .enter-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-gradient);
   color: white;
   border: none;
   padding: 1rem 3rem;
   font-size: 1.1rem;
-  font-weight: 600;
-  border-radius: 8px;
+  font-weight: 800;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.3);
 }
 
 .enter-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-hover);
 }
 
 .enter-button:disabled {

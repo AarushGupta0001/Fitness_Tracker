@@ -48,6 +48,11 @@ const requestWithFallback = async (path, options = {}) => {
       return response
     } catch (error) {
       lastError = error
+
+      // Retry only for network-level failures (server down, CORS/network unreachable).
+      if (!(error instanceof TypeError)) {
+        break
+      }
     }
   }
 
@@ -76,12 +81,12 @@ export const api = {
     return response.json()
   },
   // Workout Sessions
-  createWorkoutSession: async (username, selectedMuscleGroups, date) => {
+  createWorkoutSession: async (username, selectedMuscleGroups, date, fatigueLevel = null) => {
     const response = await requestWithFallback(
       '/WorkoutSessions',
       withAuthHeaders(withJsonHeaders({
         method: 'POST',
-        body: JSON.stringify({ username, selectedMuscleGroups, date }),
+        body: JSON.stringify({ username, selectedMuscleGroups, date, fatigueLevel }),
       }))
     )
     return response.json()
@@ -159,6 +164,69 @@ export const api = {
       `/WorkoutLogs${query}`,
       withAuthHeaders()
     )
+    return response.json()
+  },
+
+  getLastSimilarWorkout: async (muscleGroup, username = '', excludeSessionId = null) => {
+    const query = new URLSearchParams({ muscleGroup })
+    if (username) {
+      query.set('username', username)
+    }
+    if (excludeSessionId != null) {
+      query.set('excludeSessionId', String(excludeSessionId))
+    }
+
+    const response = await requestWithFallback(
+      `/WorkoutLogs/last-similar?${query.toString()}`,
+      withAuthHeaders()
+    )
+
+    return response.json()
+  },
+
+  getProgressiveOverloadInsight: async (muscleGroup, username = '') => {
+    const query = new URLSearchParams({ muscleGroup })
+    if (username) {
+      query.set('username', username)
+    }
+
+    const response = await requestWithFallback(
+      `/Insights/progressive-overload?${query.toString()}`,
+      withAuthHeaders()
+    )
+
+    return response.json()
+  },
+
+  getWeeklyPerformanceInsight: async (weekStart = '', username = '') => {
+    const query = new URLSearchParams()
+    if (weekStart) {
+      query.set('weekStart', weekStart)
+    }
+    if (username) {
+      query.set('username', username)
+    }
+
+    const suffix = query.toString() ? `?${query.toString()}` : ''
+    const response = await requestWithFallback(
+      `/Insights/weekly-performance${suffix}`,
+      withAuthHeaders()
+    )
+
+    return response.json()
+  },
+
+  getRecoveryInsight: async (days = 14, username = '') => {
+    const query = new URLSearchParams({ days: String(days) })
+    if (username) {
+      query.set('username', username)
+    }
+
+    const response = await requestWithFallback(
+      `/Insights/recovery?${query.toString()}`,
+      withAuthHeaders()
+    )
+
     return response.json()
   },
 }

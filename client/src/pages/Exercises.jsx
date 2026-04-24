@@ -5,6 +5,8 @@ import { api } from '../utils/api'
 import { getUsername } from '../utils/auth'
 import '../styles/Exercises.css'
 
+const FATIGUE_OPTIONS = ['Low', 'Moderate', 'High']
+
 export default function Exercises() {
   const { selectedDate } = useParams()
   const navigate = useNavigate()
@@ -20,6 +22,8 @@ export default function Exercises() {
   const [addingAll, setAddingAll] = useState(false)
   const [showAlert, setShowAlert] = useState(false)
   const [alertMessage, setAlertMessage] = useState('')
+  const [fatigueLevel, setFatigueLevel] = useState('Moderate')
+  const [lastSimilarWorkout, setLastSimilarWorkout] = useState(null)
 
   useEffect(() => {
     if (!username) {
@@ -63,6 +67,7 @@ export default function Exercises() {
 
           setWorkoutSessionId(latestSession.id)
           setSelectedCategories(categories)
+          setFatigueLevel(latestSession.fatigueLevel || 'Moderate')
           setExerciseTemplates(groupedTemplates)
           setWeightCatalog({
             dumbel: catalog.dumbel || [],
@@ -83,6 +88,76 @@ export default function Exercises() {
 
     fetchData()
   }, [navigate, selectedDate, username])
+
+  useEffect(() => {
+    const fetchLastSimilarWorkout = async () => {
+      if (!activeTab || !username) {
+        setLastSimilarWorkout(null)
+        return
+      }
+
+      try {
+        const result = await api.getLastSimilarWorkout(activeTab, username, workoutSessionId)
+        if (result?.workoutSessionId && result.workoutSessionId !== workoutSessionId) {
+          setLastSimilarWorkout(result)
+        } else {
+          setLastSimilarWorkout(null)
+        }
+      } catch {
+        setLastSimilarWorkout(null)
+      }
+    }
+
+    fetchLastSimilarWorkout()
+  }, [activeTab, username, workoutSessionId])
+
+  const applyLastWorkoutPrefill = () => {
+    if (!lastSimilarWorkout?.exercises?.length) {
+      return
+    }
+
+    setExerciseSelections((prev) => {
+      const next = { ...prev }
+
+      for (const exercise of lastSimilarWorkout.exercises) {
+        const existing = next[exercise.exerciseTemplateId] || {
+          setsCount: 0,
+          isSkipped: false,
+          weights: [],
+          activeSetIndex: 0,
+        }
+
+        if (exercise.isSkipped) {
+          next[exercise.exerciseTemplateId] = {
+            ...existing,
+            setsCount: 0,
+            isSkipped: true,
+            weights: [],
+            activeSetIndex: 0,
+          }
+          continue
+        }
+
+        const weights = (exercise.sets || [])
+          .sort((a, b) => a.setNumber - b.setNumber)
+          .map((setItem) => setItem.weight)
+
+        next[exercise.exerciseTemplateId] = {
+          ...existing,
+          setsCount: weights.length,
+          isSkipped: false,
+          weights,
+          activeSetIndex: 0,
+        }
+      }
+
+      return next
+    })
+
+    setAlertMessage(`Applied last ${activeTab} workout as editable template.`)
+    setShowAlert(true)
+    setTimeout(() => setShowAlert(false), 2500)
+  }
 
   const handleAddExercise = (exerciseName) => {
     setAlertMessage(`${exerciseName} added successfully! ✓`)
@@ -221,10 +296,12 @@ export default function Exercises() {
         workoutSessionId,
         username,
         date: selectedDate,
+        fatigueLevel,
         exercises: payloadExercises,
       })
 
-      handleAddExercise(`${result.createdCount} set logs`)
+      const prPart = result.newPrCount > 0 ? ` • ${result.newPrCount} new PR${result.newPrCount > 1 ? 's' : ''}` : ''
+      handleAddExercise(`${result.createdCount} set logs saved${prPart}`)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -264,12 +341,41 @@ export default function Exercises() {
 
         {/* Main Content */}
         <div className="exercises-main">
+          {lastSimilarWorkout && (
+            <div className="last-workout-suggestion">
+              <div>
+                <h4>Last {activeTab} workout found</h4>
+                <p>
+                  {new Date(lastSimilarWorkout.date).toLocaleDateString()} • {lastSimilarWorkout.exercises.length} exercises
+                </p>
+              </div>
+              <button className="apply-suggestion-button" onClick={applyLastWorkoutPrefill}>
+                Use Last Workout
+              </button>
+            </div>
+          )}
+
           <div className="exercises-toolbar">
             <div>
               <h2>{activeTab ? `${activeTab} Exercises` : 'Exercises'}</h2>
               <p>Select sets and weights, then save all exercises.</p>
             </div>
             <div className="exercises-actions">
+              <div className="fatigue-selector">
+                <span>Fatigue</span>
+                <div className="fatigue-options">
+                  {FATIGUE_OPTIONS.map((option) => (
+                    <button
+                      key={option}
+                      className={`fatigue-option ${fatigueLevel === option ? 'selected' : ''}`}
+                      onClick={() => setFatigueLevel(option)}
+                      type="button"
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <button
                 onClick={handleAddAllForMuscle}
                 disabled={!activeTab || addingAll}

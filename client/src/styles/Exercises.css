@@ -59,6 +59,38 @@
   overflow: hidden;
 }
 
+.last-workout-suggestion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(234, 88, 12, 0.25);
+  background: linear-gradient(120deg, #fff7ed, #ffedd5);
+  border-radius: 14px;
+}
+
+.last-workout-suggestion h4 {
+  margin: 0;
+  color: #9a3412;
+}
+
+.last-workout-suggestion p {
+  margin: 0.25rem 0 0;
+  color: #b45309;
+  font-size: 0.9rem;
+}
+
+.apply-suggestion-button {
+  border: 0;
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  background: #ea580c;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .exercises-toolbar {
   display: flex;
   justify-content: space-between;
@@ -87,6 +119,46 @@
   flex-wrap: wrap;
   gap: 0.6rem;
   justify-content: flex-end;
+}
+
+.fatigue-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem;
+  border: 1px solid #fdba74;
+  border-radius: 12px;
+  background: #fff7ed;
+}
+
+.fatigue-selector span {
+  font-size: 0.83rem;
+  font-weight: 800;
+  color: #9a3412;
+  text-transform: uppercase;
+  padding: 0 0.2rem;
+}
+
+.fatigue-options {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.fatigue-option {
+  border: 1px solid #fdba74;
+  border-radius: 999px;
+  background: #fff;
+  color: #9a3412;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+}
+
+.fatigue-option.selected {
+  background: #f97316;
+  border-color: #ea580c;
+  color: #fff;
 }
 
 .exercises-alerts {

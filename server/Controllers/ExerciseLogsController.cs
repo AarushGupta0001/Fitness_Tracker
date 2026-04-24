@@ -45,6 +45,16 @@ public class ExerciseLogsController(AppDbContext context) : ControllerBase
             return BadRequest("At least one exercise is required");
         }
 
+        if (!string.IsNullOrWhiteSpace(request.FatigueLevel))
+        {
+            if (!Enum.TryParse<FatigueLevel>(request.FatigueLevel, true, out var parsedFatigue))
+            {
+                return BadRequest("Invalid FatigueLevel. Allowed values: Low, Moderate, High");
+            }
+
+            session.FatigueLevel = parsedFatigue;
+        }
+
         var templates = await context.ExerciseTemplates
             .Include(t => t.ExerciseObjectType)
             .ToDictionaryAsync(t => t.Id);
@@ -54,6 +64,7 @@ public class ExerciseLogsController(AppDbContext context) : ControllerBase
         var machineWeights = await context.WeightMachine.OrderBy(w => w.DisplayOrder).Select(w => w.Value).ToListAsync();
 
         var logs = new List<ExerciseLog>();
+        var personalRecords = new List<PersonalRecord>();
 
         foreach (var exercise in request.Exercises)
         {
@@ -126,14 +137,45 @@ public class ExerciseLogsController(AppDbContext context) : ControllerBase
                     CreatedAt = DateTime.UtcNow
                 });
             }
+
+            var currentBest = exercise.Weights.Max();
+            var previousBest = await context.ExerciseLogs
+                .Where(log =>
+                    log.Username == username &&
+                    log.ExerciseTemplateId == template.Id &&
+                    !log.IsSkipped &&
+                    log.Weight.HasValue)
+                .MaxAsync(log => (decimal?)log.Weight) ?? 0m;
+
+            if (currentBest > previousBest)
+            {
+                personalRecords.Add(new PersonalRecord
+                {
+                    Username = username,
+                    WorkoutSessionId = session.Id,
+                    ExerciseTemplateId = template.Id,
+                    ExerciseName = template.Name,
+                    MuscleGroup = template.MuscleGroup,
+                    PreviousBestWeight = previousBest,
+                    NewBestWeight = currentBest,
+                    Date = parsedDate.Date,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
         }
 
         await context.ExerciseLogs.AddRangeAsync(logs);
+        if (personalRecords.Count > 0)
+        {
+            await context.PersonalRecords.AddRangeAsync(personalRecords);
+        }
+
         await context.SaveChangesAsync();
 
         return Ok(new BulkExerciseLogResponse
         {
             CreatedCount = logs.Count,
+            NewPrCount = personalRecords.Count,
             Message = "Exercise logs saved successfully"
         });
     }
@@ -162,6 +204,7 @@ public class CreateBulkExerciseLogRequest
     public int WorkoutSessionId { get; set; }
     public string Username { get; set; } = string.Empty;
     public string Date { get; set; } = string.Empty;
+    public string? FatigueLevel { get; set; }
     public List<CreateExerciseLogItem> Exercises { get; set; } = [];
 }
 
@@ -175,5 +218,6 @@ public class CreateExerciseLogItem
 public class BulkExerciseLogResponse
 {
     public int CreatedCount { get; set; }
+    public int NewPrCount { get; set; }
     public string Message { get; set; } = string.Empty;
 }

@@ -1,0 +1,116 @@
+.auth-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  padding-top: 3rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--card-gradient);
+  border: var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 2rem;
+  box-shadow: var(--shadow-card);
+  color: var(--color-text-main);
+}
+
+.auth-card h1 {
+  text-align: center;
+  margin: 0 0 0.5rem;
+  font-size: 1.8rem;
+  color: var(--color-text-main);
+}
+
+.auth-subtitle {
+  text-align: center;
+  color: var(--color-text-light);
+  font-size: 0.95rem;
+  margin: 0 0 2rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.auth-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+}
+
+.auth-input {
+  border: var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 0.8rem;
+  font-size: 1rem;
+  color: var(--color-text-main);
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+}
+
+.auth-button {
+  background: var(--primary-gradient);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.85rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.auth-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+.auth-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.auth-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--color-text-light);
+}
+
+.auth-link {
+  color: var(--color-primary-dark);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+.auth-error {
+  color: #ef4444;
+  font-size: 0.9rem;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  padding: 0.6rem;
+  border-radius: 6px;
+  text-align: center;
+}
