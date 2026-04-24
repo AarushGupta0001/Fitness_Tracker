@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../utils/api'
-import { setAuth } from '../utils/auth'
+import { setAuth, setGuestMode } from '../utils/auth'
 import '../styles/Auth.css'
 
 export default function Register() {
@@ -25,6 +25,11 @@ export default function Register() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleGuestLogin = () => {
+    setGuestMode()
+    navigate('/')
   }
 
   return (
@@ -72,6 +77,23 @@ export default function Register() {
           Already have an account?{' '}
           <Link className="auth-link" to="/login">Log in</Link>
         </p>
+
+        <div className="auth-divider">
+          <span>or</span>
+        </div>
+
+        <button
+          id="guest-register-btn"
+          type="button"
+          className="auth-guest-button"
+          onClick={handleGuestLogin}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="guest-icon">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          Continue as Guest
+        </button>
       </div>
     </div>
   )

@@ -74,6 +74,9 @@ export default function WorkoutLogs() {
     <div className="logs-page">
       <Navbar />
 
+      <div className="logs-page__orb logs-page__orb--1" />
+      <div className="logs-page__orb logs-page__orb--2" />
+
       <div className="logs-shell">
         <div className="logs-header">
           <div>

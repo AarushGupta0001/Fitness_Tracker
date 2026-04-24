@@ -1,0 +1,233 @@
+/* ──────────────────────────────────────────────────────────────────────
+   CALENDAR PAGE — Kinetic Precision red/black layout
+────────────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700;800;900&family=Manrope:wght@400;500;600;700&display=swap');
+
+.cal-page {
+  min-height: 100vh;
+  background: #0D0D0D;
+  color: #e5e2e1;
+  font-family: 'Manrope', sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Background orbs ──────────────────────────────────────────────── */
+.cal-page__orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cal-page__orb--1 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(229,25,26,0.12) 0%, transparent 70%);
+  top: -100px;
+  left: -200px;
+}
+
+.cal-page__orb--2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(229,25,26,0.07) 0%, transparent 70%);
+  bottom: -100px;
+  right: -100px;
+}
+
+/* ── Main layout ──────────────────────────────────────────────────── */
+.cal-page__content {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 120px 2rem 4rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5rem;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* ── Left column ──────────────────────────────────────────────────── */
+.cal-page__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(229, 25, 26, 0.1);
+  border: 1px solid rgba(229, 25, 26, 0.2);
+  border-radius: 9999px;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #E5191A;
+  margin-bottom: 1.5rem;
+}
+
+.cal-page__title {
+  font-family: 'Lexend', sans-serif;
+  font-size: clamp(2.2rem, 4vw, 3.5rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: #e5e2e1;
+  margin: 0 0 1.25rem;
+}
+
+.cal-page__title-accent {
+  background: linear-gradient(135deg, #E5191A 0%, #ff6060 70%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 20px rgba(229,25,26,0.35));
+}
+
+.cal-page__sub {
+  font-size: 1rem;
+  color: #a09e9e;
+  line-height: 1.7;
+  max-width: 420px;
+  margin-bottom: 2.5rem;
+}
+
+/* ── Tips ─────────────────────────────────────────────────────────── */
+.cal-page__tips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2.5rem;
+}
+
+.cal-page__tips-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #E5191A;
+  margin-bottom: 0.25rem;
+}
+
+.cal-page__tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.cal-page__tip:hover {
+  background: rgba(229, 25, 26, 0.05);
+  border-color: rgba(229, 25, 26, 0.12);
+}
+
+.cal-page__tip-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.cal-page__tip-text {
+  font-size: 0.85rem;
+  color: #7a7878;
+  line-height: 1.5;
+}
+
+/* ── Stats strip ──────────────────────────────────────────────────── */
+.cal-page__stats {
+  display: flex;
+  gap: 2.5rem;
+}
+
+.cal-page__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.cal-page__stat-val {
+  font-family: 'Lexend', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #E5191A;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.cal-page__stat-lab {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #5a5858;
+}
+
+/* ── Right column — calendar wrapper ─────────────────────────────── */
+.cal-page__right {
+  display: flex;
+  justify-content: center;
+}
+
+.cal-page__cal-wrap {
+  width: 100%;
+  max-width: 480px;
+}
+
+.cal-page__cal-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #5a5858;
+  margin-bottom: 1rem;
+  padding-left: 0.25rem;
+}
+
+.cal-page__cal-dot {
+  width: 6px;
+  height: 6px;
+  background: #E5191A;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(229, 25, 26, 0.7);
+  animation: cal-dot-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes cal-dot-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 25, 26, 0.5); }
+  50%       { box-shadow: 0 0 0 5px rgba(229, 25, 26, 0); }
+}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .cal-page__content {
+    grid-template-columns: 1fr;
+    padding-top: 100px;
+    gap: 3rem;
+  }
+
+  .cal-page__right {
+    order: -1;
+  }
+
+  .cal-page__title {
+    font-size: clamp(2rem, 7vw, 3rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .cal-page__content {
+    padding: 90px 1.25rem 3rem;
+  }
+
+  .cal-page__stats { gap: 1.5rem; }
+}

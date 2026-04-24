@@ -59,6 +59,9 @@ export default function Progress() {
     <div className="progress-page">
       <Navbar />
 
+      <div className="progress-page__orb progress-page__orb--1" />
+      <div className="progress-page__orb progress-page__orb--2" />
+
       <div className="progress-shell">
         <aside className="progress-sidebar">
           <h3>Progress</h3>

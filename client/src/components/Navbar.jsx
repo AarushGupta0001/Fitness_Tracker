@@ -1,12 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { clearAuth, getUsername } from '../utils/auth'
+import { useState, useEffect, useRef } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { clearAuth, getUsername, isGuest } from '../utils/auth'
+import '../styles/Navbar.css'
 
 export default function Navbar({ selectedDate }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const profileRef = useRef(null)
   const navigate = useNavigate()
+  const location = useLocation()
   const username = getUsername() || 'User'
+  const guest = isGuest()
+
+  // Shrink nav on scroll
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 50)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -22,15 +33,14 @@ export default function Navbar({ selectedDate }) {
   const formatDate = (date) => {
     if (!date) return ''
     const d = new Date(date)
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
-    return d.toLocaleDateString('en-US', options)
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
   }
 
   const navLinks = [
-    { name: 'Home', path: '/' },
+    { name: 'Home',     path: '/' },
     { name: 'Calendar', path: '/calendar' },
-    { name: 'Logs', path: '/logs' },
-    { name: 'Progress', path: '/progress' }
+    { name: 'Logs',     path: '/logs' },
+    { name: 'Progress', path: '/progress' },
   ]
 
   const handleSignOut = () => {
@@ -38,57 +48,102 @@ export default function Navbar({ selectedDate }) {
     navigate('/login')
   }
 
+  const isActive = (path) => location.pathname === path
+
   return (
-    <nav className="bg-[#131313] border-b border-[#2A2A2A] text-[#e5e2e1] px-6 py-4 flex items-center justify-between sticky top-0 z-50">
-      <div className="flex items-center gap-8">
-        <h1 className="text-2xl font-bold tracking-tighter text-red-500">
-          VELOCITY<span className="text-[#e5e2e1]">.FIT</span>
-        </h1>
-        
-        <ul className="hidden md:flex items-center gap-6">
+    <nav className={`app-nav ${scrolled ? 'app-nav--scrolled' : ''}`}>
+      <div className="app-nav__inner">
+        {/* Logo */}
+        <Link to="/" className="app-nav__logo">
+          <span className="app-nav__logo-mark">⚡</span>
+          <span className="app-nav__logo-text">
+            FITNESS<span className="app-nav__logo-accent">TRACK</span>
+          </span>
+        </Link>
+
+        {/* Nav Links */}
+        <ul className="app-nav__links">
           {navLinks.map((link) => (
             <li key={link.name}>
-              <Link 
+              <Link
                 to={link.path}
-                className="group relative text-sm font-medium tracking-wide uppercase text-[#e5e2e1] hover:text-red-500 transition-colors duration-300"
+                className={`app-nav__link ${isActive(link.path) ? 'app-nav__link--active' : ''}`}
               >
                 {link.name}
-                <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-red-500 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out"></span>
+                <span className="app-nav__link-bar" />
               </Link>
             </li>
           ))}
         </ul>
-      </div>
 
-      <div ref={profileRef} className="flex items-center gap-4 relative">
-        {selectedDate && (
-          <span className="text-xs font-mono text-[#ebbbb4] hidden lg:block tracking-widest uppercase mr-4">
-            {formatDate(selectedDate)}
-          </span>
-        )}
-        
-        {/* Profile Button */}
-        <button 
-          onClick={() => setIsProfileOpen(!isProfileOpen)}
-          className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 font-bold tracking-wider hover:bg-red-500 hover:text-[#131313] border-2 border-red-500 transition-all duration-300 focus:outline-none"
-        >
-          {username.charAt(0)}
-        </button>
+        {/* Right side */}
+        <div className="app-nav__right">
+          {selectedDate && (
+            <span className="app-nav__date">
+              <span className="app-nav__date-dot" />
+              {formatDate(selectedDate)}
+            </span>
+          )}
 
-        {/* Profile Dropdown */}
-        <div 
-          className={`absolute top-14 right-0 w-40 bg-[#0E0E0E] rounded-md shadow-lg shadow-black/40 z-50 overflow-hidden transition-all duration-200 origin-top-right ${
-            isProfileOpen ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'
-          }`}
-        >
-          <h2 className='py-2 text-center text-xs tracking-wider uppercase text-[#888] transition-colors cursor-default'>{username}</h2>
-          <button 
-            onClick={handleSignOut}
-            className="w-full flex items-center gap-3 text-left px-4 py-2.5 text-xs tracking-wider uppercase text-[#888] hover:text-red-500 hover:bg-white/5 transition-colors outline-none"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-            Sign Out
-          </button>
+          {/* Profile */}
+          <div className="app-nav__profile-wrap" ref={profileRef}>
+            <button
+              className="app-nav__avatar"
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              aria-label="Profile menu"
+              aria-expanded={isProfileOpen}
+            >
+              {username.charAt(0).toUpperCase()}
+            </button>
+
+            <div className={`app-nav__dropdown ${isProfileOpen ? 'app-nav__dropdown--open' : ''}`}>
+              <div className="app-nav__dropdown-header">
+                <span className="app-nav__dropdown-name">{username}</span>
+                {guest && <span className="app-nav__guest-badge">Guest</span>}
+              </div>
+              {guest ? (
+                <>
+                  <Link
+                    to="/login"
+                    className="app-nav__dropdown-item"
+                    onClick={() => setIsProfileOpen(false)}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                      strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
+                      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                      <polyline points="10 17 15 12 10 7"/>
+                      <line x1="15" y1="12" x2="3" y2="12"/>
+                    </svg>
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="app-nav__dropdown-item"
+                    onClick={() => setIsProfileOpen(false)}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                      strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                      <circle cx="9" cy="7" r="4"/>
+                      <line x1="19" y1="8" x2="19" y2="14"/>
+                      <line x1="22" y1="11" x2="16" y2="11"/>
+                    </svg>
+                    Create Account
+                  </Link>
+                </>
+              ) : (
+                <button className="app-nav__dropdown-item" onClick={handleSignOut}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                    strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                  Sign Out
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </nav>
